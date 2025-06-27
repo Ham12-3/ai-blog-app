@@ -1,7 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['images.clerk.dev', 'ik.imagekit.io'],
+    domains: [
+      'images.clerk.dev', 
+      'ik.imagekit.io',
+      'images.unsplash.com',
+      'via.placeholder.com',
+      'picsum.photos',
+      'source.unsplash.com'
+    ],
   },
   env: {
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,

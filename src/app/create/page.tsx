@@ -5,11 +5,12 @@ import { useAuth, useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useForm, Controller } from 'react-hook-form'
 import toast from 'react-hot-toast'
-import { SparklesIcon, EyeIcon } from '@heroicons/react/24/outline'
+import { SparklesIcon, EyeIcon, PencilIcon, BookmarkIcon, ShareIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
 import BlogEditor from '@/components/BlogEditor'
 import BlogPreview from '@/components/BlogPreview'
 import TagInput from '@/components/TagInput'
 import ImageUpload from '@/components/ImageUpload'
+import Header from '@/components/Header'
 
 interface BlogForm {
   title: string
@@ -25,6 +26,9 @@ export default function CreateBlog() {
   const router = useRouter()
   const [isGenerating, setIsGenerating] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
+  const [isSavingDraft, setIsSavingDraft] = useState(false)
+  const [isPublishing, setIsPublishing] = useState(false)
+  
   const {
     register,
     handleSubmit,
@@ -97,6 +101,7 @@ export default function CreateBlog() {
   }
 
   const saveDraft = async (data: BlogForm) => {
+    setIsSavingDraft(true)
     try {
       const token = await getToken()
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blogs/draft`, {
@@ -122,10 +127,13 @@ export default function CreateBlog() {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
       toast.error(errorMessage)
       console.error('Error saving draft:', error)
+    } finally {
+      setIsSavingDraft(false)
     }
   }
 
   const publishBlog = async (data: BlogForm) => {
+    setIsPublishing(true)
     try {
       const token = await getToken()
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/blogs/publish`, {
@@ -153,159 +161,268 @@ export default function CreateBlog() {
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
       toast.error(errorMessage)
       console.error('Error publishing blog:', error)
+    } finally {
+      setIsPublishing(false)
     }
   }
 
+  const watchedTitle = watch('title')
+  const watchedContent = watch('content')
+  const hasContent = watchedTitle || watchedContent
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+      <Header />
+      
+      {/* Top Navigation Bar */}
+      <div className="sticky top-16 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-soft">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between py-4">
+            {/* Left side - Back button and title */}
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => router.back()}
+                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors duration-200"
+              >
+                <ArrowLeftIcon className="h-5 w-5 mr-2" />
+                Back
+              </button>
+              <div className="h-6 border-l border-gray-200"></div>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">Create New Post</h1>
+                <p className="text-sm text-gray-500">Draft auto-saves as you type</p>
+              </div>
+            </div>
+
+            {/* Right side - View toggle and actions */}
+            <div className="flex items-center space-x-3">
+              {/* View Toggle */}
+              <div className="bg-gray-100 rounded-lg p-1 flex">
+                <button
+                  type="button"
+                  onClick={() => setShowPreview(false)}
+                  className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    !showPreview 
+                      ? 'bg-white text-gray-900 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <PencilIcon className="h-4 w-4 mr-2" />
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPreview(true)}
+                  className={`flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                    showPreview 
+                      ? 'bg-white text-gray-900 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  <EyeIcon className="h-4 w-4 mr-2" />
+                  Preview
+                </button>
+              </div>
+
+              {/* Action Buttons */}
+              <button
+                type="button"
+                onClick={handleSubmit(saveDraft)}
+                disabled={isSavingDraft || !hasContent}
+                className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSavingDraft ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <BookmarkIcon className="h-4 w-4 mr-2" />
+                    Save Draft
+                  </>
+                )}
+              </button>
+              
+              <button
+                type="submit"
+                onClick={handleSubmit(publishBlog)}
+                disabled={isPublishing || !hasContent}
+                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isPublishing ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    Publishing...
+                  </>
+                ) : (
+                  <>
+                    <ShareIcon className="h-4 w-4 mr-2" />
+                    Publish
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Create New Blog Post</h1>
-          <p className="mt-2 text-gray-600">Use AI to help generate amazing content</p>
-        </div>
-
-        <div className="flex space-x-4 mb-6">
-          <button
-            type="button"
-            onClick={() => setShowPreview(false)}
-            className={`px-4 py-2 rounded-md font-medium ${
-              !showPreview 
-                ? 'bg-indigo-600 text-white' 
-                : 'bg-white text-gray-700 border border-gray-300'
-            }`}
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowPreview(true)}
-            className={`px-4 py-2 rounded-md font-medium flex items-center ${
-              showPreview 
-                ? 'bg-indigo-600 text-white' 
-                : 'bg-white text-gray-700 border border-gray-300'
-            }`}
-          >
-            <EyeIcon className="h-4 w-4 mr-2" />
-            Preview
-          </button>
-        </div>
-
         {showPreview ? (
-          <BlogPreview
-            title={watch('title')}
-            content={watch('content')}
-            tags={watch('tags')}
-            author={user?.fullName || 'Anonymous'}
-            featuredImage={watch('featuredImage')}
-          />
+          <div className="animate-fade-in">
+            <div className="max-w-4xl mx-auto">
+              <div className="card p-8">
+                <BlogPreview
+                  title={watch('title')}
+                  content={watch('content')}
+                  tags={watch('tags')}
+                  author={user?.fullName || 'Anonymous'}
+                  featuredImage={watch('featuredImage')}
+                />
+              </div>
+            </div>
+          </div>
         ) : (
-          <form onSubmit={handleSubmit(publishBlog)} className="space-y-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="grid grid-cols-1 gap-6">
-                <div>
-                  <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                    Title
-                  </label>
-                  <input
-                    type="text"
-                    {...register('title', { required: 'Title is required' })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="Enter your blog title"
-                  />
-                  {errors.title && (
-                    <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
-                  )}
+          <div className="animate-fade-in">
+            <form className="space-y-8">
+              {/* Header Section */}
+              <div className="card p-8 space-y-6">
+                <div className="space-y-2">
+                  <h2 className="text-lg font-semibold text-gray-900">Post Details</h2>
+                  <p className="text-gray-600">Add the basic information about your blog post</p>
                 </div>
 
-                <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                    Description
-                  </label>
-                  <textarea
-                    {...register('description', { required: 'Description is required' })}
-                    rows={3}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="Brief description of your blog post"
-                  />
-                  {errors.description && (
-                    <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
-                    Tags
-                  </label>
-                  <Controller
-                    name="tags"
-                    control={control}
-                    render={({ field }) => (
-                      <TagInput
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Add tags..."
-                      />
-                    )}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Featured Image
-                  </label>
-                  <ImageUpload
-                    onUploadSuccess={(url) => setValue('featuredImage', url)}
-                    folder="featured-images"
-                    placeholder="Upload a featured image for your blog post"
-                    maxSize={10}
-                  />
-                  <p className="mt-1 text-xs text-gray-500">
-                    Upload a high-quality image that represents your blog post. This will be displayed as the main image.
-                  </p>
-                </div>
-
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label htmlFor="content" className="block text-sm font-medium text-gray-700">
-                      Content
+                <div className="space-y-6">
+                  {/* Title */}
+                  <div>
+                    <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                      Title *
                     </label>
-                    <button
-                      type="button"
-                      onClick={generateAIContent}
-                      disabled={isGenerating}
-                      className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
-                    >
-                      <SparklesIcon className="h-4 w-4 mr-1" />
-                      {isGenerating ? 'Generating...' : 'Generate with AI'}
-                    </button>
+                    <input
+                      type="text"
+                      {...register('title', { required: 'Title is required' })}
+                      className="input text-xl font-semibold"
+                      placeholder="Enter an engaging title for your post..."
+                    />
+                    {errors.title && (
+                      <p className="mt-2 text-sm text-red-600 flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {errors.title.message}
+                      </p>
+                    )}
                   </div>
+
+                  {/* Description */}
+                  <div>
+                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                      Description *
+                    </label>
+                    <textarea
+                      {...register('description', { required: 'Description is required' })}
+                      rows={3}
+                      className="input resize-none"
+                      placeholder="Brief description that summarizes your post..."
+                    />
+                    {errors.description && (
+                      <p className="mt-2 text-sm text-red-600 flex items-center">
+                        <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        {errors.description.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Tags and Featured Image Row */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Tags */}
+                    <div>
+                      <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-2">
+                        Tags
+                      </label>
+                      <Controller
+                        name="tags"
+                        control={control}
+                        render={({ field }) => (
+                          <TagInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Add relevant tags..."
+                          />
+                        )}
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Press Enter to add tags that help categorize your post
+                      </p>
+                    </div>
+
+                    {/* Featured Image */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Featured Image
+                      </label>
+                      <ImageUpload
+                        onUploadSuccess={(url) => setValue('featuredImage', url)}
+                        folder="featured-images"
+                        placeholder="Upload featured image"
+                        maxSize={10}
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        High-quality image that represents your post
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content Section */}
+              <div className="card p-8 space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <h2 className="text-lg font-semibold text-gray-900">Content</h2>
+                    <p className="text-gray-600">Write your blog post content or use AI to help generate it</p>
+                  </div>
+                  
+                  <button
+                    type="button"
+                    onClick={generateAIContent}
+                    disabled={isGenerating}
+                    className="btn-primary bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isGenerating ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <SparklesIcon className="h-4 w-4 mr-2" />
+                        Generate with AI
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div>
                   <BlogEditor
                     content={watch('content')}
                     onChange={(content) => setValue('content', content)}
                   />
                   {errors.content && (
-                    <p className="mt-1 text-sm text-red-600">{errors.content.message}</p>
+                    <p className="mt-2 text-sm text-red-600 flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      {errors.content.message}
+                    </p>
                   )}
                 </div>
               </div>
-            </div>
-
-            <div className="flex justify-end space-x-4">
-              <button
-                type="button"
-                onClick={handleSubmit(saveDraft)}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Save Draft
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                Publish
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         )}
       </div>
     </div>

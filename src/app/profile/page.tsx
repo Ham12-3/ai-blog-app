@@ -4,8 +4,24 @@ import { useState, useEffect } from 'react'
 import { useAuth, useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 import BlogCard from '@/components/BlogCard'
 import type { Blog } from '@/types/blog'
+import { 
+  PencilIcon, 
+  CheckIcon, 
+  XMarkIcon, 
+  MapPinIcon, 
+  LinkIcon, 
+  CalendarIcon,
+  EyeIcon,
+  HeartIcon,
+  UserGroupIcon,
+  DocumentTextIcon,
+  BookmarkIcon,
+  SparklesIcon,
+  GlobeAltIcon
+} from '@heroicons/react/24/outline'
 
 interface UserProfile {
   id: string
@@ -69,9 +85,9 @@ export default function ProfilePage() {
         'Content-Type': 'application/json'
       }
 
-      console.log('Fetching user data with token:', token ? 'Present' : 'Missing') // Debug
+      console.log('Fetching user data with token:', token ? 'Present' : 'Missing')
       if (token) {
-        console.log('Token preview:', token.substring(0, 20) + '...') // Show first 20 chars
+        console.log('Token preview:', token.substring(0, 20) + '...')
       }
 
       const [profileRes, statsRes, readingRes] = await Promise.all([
@@ -80,12 +96,12 @@ export default function ProfilePage() {
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/reading-list`, { headers })
       ])
 
-      console.log('Profile response status:', profileRes.status) // Debug
-      console.log('Stats response status:', statsRes.status) // Debug
+      console.log('Profile response status:', profileRes.status)
+      console.log('Stats response status:', statsRes.status)
 
       if (profileRes.ok) {
         const profileData = await profileRes.json()
-        console.log('Profile data:', profileData) // Debug
+        console.log('Profile data:', profileData)
         setProfile(profileData)
         setFormData({
           bio: profileData.bio || '',
@@ -102,7 +118,7 @@ export default function ProfilePage() {
 
       if (statsRes.ok) {
         const statsData = await statsRes.json()
-        console.log('Stats data:', statsData) // Debug
+        console.log('Stats data:', statsData)
         setStats(statsData)
       } else {
         const errorData = await statsRes.text()
@@ -164,16 +180,30 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
         <Header />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-300 rounded w-1/4 mb-4"></div>
-            <div className="h-4 bg-gray-300 rounded w-1/2 mb-8"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="h-32 bg-gray-300 rounded"></div>
-              <div className="h-32 bg-gray-300 rounded"></div>
-              <div className="h-32 bg-gray-300 rounded"></div>
+          <div className="animate-pulse space-y-8">
+            {/* Header Skeleton */}
+            <div className="card p-8">
+              <div className="flex items-center space-x-6">
+                <div className="w-24 h-24 bg-gray-300 rounded-full"></div>
+                <div className="space-y-3">
+                  <div className="h-8 bg-gray-300 rounded w-48"></div>
+                  <div className="h-4 bg-gray-300 rounded w-32"></div>
+                  <div className="h-4 bg-gray-300 rounded w-64"></div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Stats Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="card p-6">
+                  <div className="h-12 bg-gray-300 rounded mb-3"></div>
+                  <div className="h-6 bg-gray-300 rounded w-16"></div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -181,341 +211,293 @@ export default function ProfilePage() {
     )
   }
 
+  const joinedDate = profile?.joinedAt ? new Date(profile.joinedAt).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long'
+  }) : 'Recently'
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
       <Header />
       
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Profile Header */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center space-x-4">
-              <img
-                src={user?.imageUrl}
-                alt={user?.fullName || 'User'}
-                className="w-20 h-20 rounded-full object-cover"
-              />
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    {user?.fullName || user?.firstName || 'Anonymous User'}
-                  </h1>
+        <div className="card p-8 mb-8 animate-fade-in">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-6">
+              <div className="relative">
+                <img
+                  src={user?.imageUrl}
+                  alt={user?.fullName || 'User'}
+                  className="w-24 h-24 rounded-2xl object-cover shadow-lg ring-4 ring-white"
+                />
+                {profile?.isVerified && (
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                    <CheckIcon className="w-4 h-4 text-white" />
+                  </div>
+                )}
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <h1 className="heading-2">{user?.fullName || 'Anonymous User'}</h1>
                   {profile?.isVerified && (
-                    <svg className="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <span className="badge-primary">
+                      <SparklesIcon className="w-3 h-3 mr-1" />
+                      Verified
+                    </span>
                   )}
                 </div>
-                <p className="text-gray-600">{user?.emailAddresses?.[0]?.emailAddress}</p>
-                {profile?.bio && <p className="text-gray-700 mt-2">{profile.bio}</p>}
                 
-                <div className="flex items-center space-x-4 mt-3 text-sm text-gray-500">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
                   {profile?.location && (
                     <div className="flex items-center space-x-1">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
+                      <MapPinIcon className="w-4 h-4" />
                       <span>{profile.location}</span>
                     </div>
                   )}
-                  
+                  <div className="flex items-center space-x-1">
+                    <CalendarIcon className="w-4 h-4" />
+                    <span>Joined {joinedDate}</span>
+                  </div>
                   {profile?.website && (
                     <a 
                       href={profile.website} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex items-center space-x-1 hover:text-blue-500"
+                      className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 transition-colors duration-200"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                      </svg>
+                      <GlobeAltIcon className="w-4 h-4" />
                       <span>Website</span>
                     </a>
                   )}
-                  
-                  <span>Joined {new Date(profile?.joinedAt || '').toLocaleDateString()}</span>
                 </div>
+                
+                {profile?.bio && (
+                  <p className="body-medium max-w-2xl">{profile.bio}</p>
+                )}
               </div>
             </div>
             
-            <button
-              onClick={() => setEditing(!editing)}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              {editing ? 'Cancel' : 'Edit Profile'}
-            </button>
-          </div>
-
-          {/* Interests */}
-          {profile?.interests && profile.interests.length > 0 && (
-            <div className="mt-4">
-              <h3 className="text-sm font-medium text-gray-900 mb-2">Interests</h3>
-              <div className="flex flex-wrap gap-2">
-                {profile.interests.map((interest) => (
-                  <span
-                    key={interest}
-                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+            <div className="mt-6 lg:mt-0">
+              {!editing ? (
+                <button
+                  onClick={() => setEditing(true)}
+                  className="btn-secondary"
+                >
+                  <PencilIcon className="w-4 h-4 mr-2" />
+                  Edit Profile
+                </button>
+              ) : (
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleSave}
+                    className="btn-primary"
                   >
-                    {interest}
-                  </span>
-                ))}
+                    <CheckIcon className="w-4 h-4 mr-2" />
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditing(false)}
+                    className="btn-secondary"
+                  >
+                    <XMarkIcon className="w-4 h-4 mr-2" />
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Edit Form */}
+          {editing && (
+            <div className="mt-8 pt-8 border-t border-gray-200 space-y-6 animate-slide-up">
+              <h3 className="text-lg font-semibold text-gray-900">Edit Profile Information</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                  <textarea
+                    value={formData.bio}
+                    onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                    rows={3}
+                    className="input resize-none"
+                    placeholder="Tell us about yourself..."
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                  <input
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                    className="input"
+                    placeholder="City, Country"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
+                  <input
+                    type="url"
+                    value={formData.website}
+                    onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
+                    className="input"
+                    placeholder="https://your-website.com"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Twitter Handle</label>
+                  <input
+                    type="text"
+                    value={formData.twitterHandle}
+                    onChange={(e) => setFormData(prev => ({ ...prev, twitterHandle: e.target.value }))}
+                    className="input"
+                    placeholder="@username"
+                  />
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Edit Profile Form */}
-        {editing && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Edit Profile</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
-                <textarea
-                  value={formData.bio}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Tell us about yourself..."
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                <input
-                  type="url"
-                  value={formData.website}
-                  onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="https://your-website.com"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                <input
-                  type="text"
-                  value={formData.location}
-                  onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="City, Country"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Twitter Handle</label>
-                <input
-                  type="text"
-                  value={formData.twitterHandle}
-                  onChange={(e) => setFormData(prev => ({ ...prev, twitterHandle: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="@username"
-                />
-              </div>
-            </div>
-
-            {/* Interests */}
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Interests</label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {formData.interests.map((interest) => (
-                  <span
-                    key={interest}
-                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                  >
-                    {interest}
-                    <button
-                      onClick={() => handleRemoveInterest(interest)}
-                      className="ml-1 text-blue-600 hover:text-blue-800"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-              <input
-                type="text"
-                placeholder="Add an interest..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    handleAddInterest((e.target as HTMLInputElement).value)
-                    ;(e.target as HTMLInputElement).value = ''
-                  }
-                }}
-              />
-            </div>
-
-            <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => setEditing(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
-              >
-                Save Changes
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg className="h-8 w-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="card p-6 hover:scale-105 transition-transform duration-200">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <DocumentTextIcon className="w-6 h-6 text-blue-600" />
               </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Posts</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats?.totalBlogs || 0}</p>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{stats?.totalBlogs || 0}</p>
+                <p className="text-sm text-gray-600">Blog Posts</p>
               </div>
             </div>
           </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg className="h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
+          
+          <div className="card p-6 hover:scale-105 transition-transform duration-200">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <EyeIcon className="w-6 h-6 text-green-600" />
               </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Views</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats?.totalViews || 0}</p>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{stats?.totalViews?.toLocaleString() || 0}</p>
+                <p className="text-sm text-gray-600">Total Views</p>
               </div>
             </div>
           </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg className="h-8 w-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
+          
+          <div className="card p-6 hover:scale-105 transition-transform duration-200">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                <HeartIcon className="w-6 h-6 text-red-600" />
               </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Likes</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats?.totalLikes || 0}</p>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{stats?.totalLikes?.toLocaleString() || 0}</p>
+                <p className="text-sm text-gray-600">Total Likes</p>
               </div>
             </div>
           </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <svg className="h-8 w-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                </svg>
+          
+          <div className="card p-6 hover:scale-105 transition-transform duration-200">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <UserGroupIcon className="w-6 h-6 text-purple-600" />
               </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-500">Followers</p>
-                <p className="text-2xl font-semibold text-gray-900">{stats?.followerCount || 0}</p>
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{stats?.followerCount || 0}</p>
+                <p className="text-sm text-gray-600">Followers</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="bg-white rounded-lg shadow-md">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-              <button
-                onClick={() => setActiveTab('overview')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'overview'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Overview
-              </button>
-              <button
-                onClick={() => setActiveTab('reading-list')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'reading-list'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                Reading List ({readingList.length})
-              </button>
+        {/* Tab Navigation */}
+        <div className="mb-8">
+          <div className="bg-white rounded-xl p-2 shadow-soft">
+            <nav className="flex space-x-2">
+              {[
+                { id: 'overview', name: 'Overview', icon: DocumentTextIcon },
+                { id: 'reading-list', name: 'Reading List', icon: BookmarkIcon }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center px-6 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === tab.id
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  <tab.icon className="w-4 h-4 mr-2" />
+                  {tab.name}
+                </button>
+              ))}
             </nav>
           </div>
+        </div>
 
-          <div className="p-6">
-            {activeTab === 'overview' && (
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Account Overview</h3>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700">Account Information</h4>
-                    <p className="text-sm text-gray-600">
-                      Member since {new Date(profile?.joinedAt || '').toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700">Activity Summary</h4>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <p>• Published {stats?.totalBlogs || 0} blog posts</p>
-                      <p>• Received {stats?.totalLikes || 0} total likes</p>
-                      <p>• Generated {stats?.totalViews || 0} total views</p>
-                      <p>• Following {stats?.followingCount || 0} users</p>
-                    </div>
-                  </div>
+        {/* Tab Content */}
+        <div className="animate-fade-in">
+          {activeTab === 'overview' && (
+            <div className="space-y-8">
+              {/* Recent Activity */}
+              <div className="card p-8">
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">Recent Activity</h2>
+                <div className="text-center py-12">
+                  <DocumentTextIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No recent activity</h3>
+                  <p className="text-gray-600 mb-6">Start creating content to see your activity here</p>
+                  <a href="/create" className="btn-primary">
+                    <SparklesIcon className="w-4 h-4 mr-2" />
+                    Create Your First Post
+                  </a>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {activeTab === 'reading-list' && (
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Reading List</h3>
-                {readingList.length === 0 ? (
-                  <div className="text-center py-8">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">No saved articles</h3>
-                    <p className="mt-1 text-sm text-gray-500">Start exploring and save articles to read later.</p>
+          {activeTab === 'reading-list' && (
+            <div>
+              {readingList.length > 0 ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {readingList.map((blog) => (
+                    <BlogCard
+                      key={blog.id}
+                      id={blog.id}
+                      slug={blog.slug}
+                      title={blog.title}
+                      excerpt={blog.excerpt || blog.content?.substring(0, 200) + '...' || ''}
+                      author={blog.authorName || 'Unknown'}
+                      publishedAt={blog.publishedAt || blog.createdAt}
+                      tags={blog.tags || []}
+                      likeCount={blog.likeCount || 0}
+                      shareCount={blog.shareCount || 0}
+                      viewCount={blog.viewCount || 0}
+                      featuredImage={blog.featuredImage}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="card p-8">
+                  <div className="text-center py-12">
+                    <BookmarkIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Your reading list is empty</h3>
+                    <p className="text-gray-600 mb-6">Save interesting articles to read later</p>
+                    <a href="/" className="btn-secondary">
+                      Browse Articles
+                    </a>
                   </div>
-                ) : (
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {readingList.map((blog) => (
-                      <BlogCard
-                        key={blog.id}
-                        id={blog.id}
-                        slug={blog.slug}
-                        title={blog.title}
-                        excerpt={blog.excerpt}
-                        author={blog.authorName}
-                        publishedAt={blog.publishedAt || blog.createdAt}
-                        tags={blog.tags}
-                        likeCount={blog.likeCount}
-                        shareCount={blog.shareCount}
-                        viewCount={blog.viewCount}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </main>
+      
+      <Footer />
     </div>
   )
 } 
